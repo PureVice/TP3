@@ -35,11 +35,14 @@ void Simulador::carregarEventos(const std::string& nomeArquivo) {
         if (linha.empty()) {
             continue;
         }
-
+        istringstream iss(linha);
+        int timestamp;
+        string comando;
+        iss >> timestamp >> comando;
         try {
-            if (linha.find("PC") != string::npos || linha.find("CL") != string::npos) {
+            if (comando == "PC" || comando == "CL") {
                 processarConsulta(linha); // Processa consultas
-            } else if (linha.find("EV") != string::npos) {
+            } else if (comando == "EV") {
                 processarEvento(Evento::lerEvento(linha)); // Processa eventos
             }
         } catch (const std::exception& e) {

@@ -12,12 +12,9 @@ NoEvento::NoEvento(Evento *ev) : dados(ev), esquerda(NULL), direita(NULL), altur
 
 // Gera chave única para ordenação dos eventos
 int ArvoreEventos::getChave(Evento *ev) const {
-    std::stringstream chaveStream;
-    chaveStream << ev->tempo;  // Começa com o tempo
-    chaveStream << std::setw(3) << std::setfill('0') << ev->idPacote;  // Adiciona ID com 3 dígitos
-    chaveStream << static_cast<int>(ev->tipo);  // Adiciona o tipo como número
-    return std::stoi(chaveStream.str());  // Converte para inteiro
+    return gerarChaveEvento(*ev);
 }
+
 
 // Construtor: inicializa árvore vazia
 ArvoreEventos::ArvoreEventos() : raiz(NULL), contador(0) {}

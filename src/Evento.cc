@@ -1,16 +1,22 @@
 #include "Evento.h"
 #include <sstream>
 
-// Converte uma string para o enum TipoEvento 
+int gerarChaveEvento(const Evento& ev) {
+    // A chave é calculada para evitar colisões, assumindo limites razoáveis
+    // para o ID do pacote e o número de tipos de evento.
+    return (ev.tempo * 10000) + (ev.idPacote * 10) + static_cast<int>(ev.tipo);
+}
+
+// Converte uma string para o enum TipoEvento
 TipoEvento Evento::lerTipo(const std::string& tipoStr) {
-    
+
     if (tipoStr == "AR") return AR;
     if (tipoStr == "EN") return EN;
     if (tipoStr == "RG") return RG;
     if (tipoStr == "RM") return RM;
     if (tipoStr == "UR") return UR;
     if (tipoStr == "TR") return TR;
-    
+
 
     exit(1);
 }
@@ -19,21 +25,21 @@ TipoEvento Evento::lerTipo(const std::string& tipoStr) {
 Evento Evento::lerEvento(const std::string& linha) {
     std::istringstream stream(linha);
     std::string token;
-    
+
     int timestamp;
     int idPacote;
-    
-    stream >> timestamp >> token; 
-    stream >> token;              
+
+    stream >> timestamp >> token;
+    stream >> token;
     stream >> idPacote;
-    
+
     TipoEvento tipo = lerTipo(token);
-    
+
     std::string remetente, destinatario;
     int armazemOrigem = -1;
     int armazemDestino = -1;
     int secaoDestino = -1;
-    
+
     switch (tipo) {
         case RG:
             stream >> remetente >> destinatario >> armazemOrigem >> armazemDestino;
@@ -54,14 +60,14 @@ Evento Evento::lerEvento(const std::string& linha) {
     return Evento(timestamp, tipo, idPacote, remetente, destinatario, armazemOrigem, armazemDestino, secaoDestino);
 }
 
-// Construtor principal 
+// Construtor principal
 Evento::Evento(
-    int p_timestamp, 
-    TipoEvento p_tipo, 
-    int p_idPacote, 
-    const std::string& p_remetente, 
+    int p_timestamp,
+    TipoEvento p_tipo,
+    int p_idPacote,
+    const std::string& p_remetente,
     const std::string& p_destinatario,
-    int p_armazemOrigem, 
+    int p_armazemOrigem,
     int p_armazemDestino,
     int p_secaoDestino
 ) {
