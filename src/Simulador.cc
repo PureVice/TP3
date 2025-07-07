@@ -1,50 +1,53 @@
 #include "Simulador.h"
 #include <iomanip>
 #include <sstream>
-#include <fstream> 
-#include <iostream> 
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
 #include "ParPacoteString.h"
 
 using namespace std;
 
+Simulador::Simulador() {}
+
+// Destrutor robusto para limpar toda a memória alocada dinamicamente.
+Simulador::~Simulador()
+{
+    // Limpa todos os Eventos
+    auto limparEventos = [](Evento *e) { delete e; };
+    eventos.emOrdem(limparEventos);
+
+    // Limpa todos os Pacotes
+    auto limparPacotes = [](Pacote *p) { delete p; };
+    pacotes.emOrdem(limparPacotes);
+}
 
 void Simulador::carregarEventos(const std::string& nomeArquivo) {
     ifstream arquivo(nomeArquivo);
     if (!arquivo.is_open()) {
-        cerr << "Erro ao abrir o arquivo: " << nomeArquivo << endl;
-        return;
+        throw std::runtime_error("Erro ao abrir o arquivo: " + nomeArquivo);
     }
 
-    for (string linha; getline(arquivo, linha); ) {
+    string linha;
+    int numeroLinha = 0;
+    while (getline(arquivo, linha)) {
+        numeroLinha++;
         if (linha.empty()) {
             continue;
         }
 
-        if (linha.find("PC") != string::npos || linha.find("CL") != string::npos) {
-            processarConsulta(linha);
-            continue;
-        }
-
-        if (linha.find("EV") != string::npos) {
-            processarEvento(Evento::lerEvento(linha));
+        try {
+            if (linha.find("PC") != string::npos || linha.find("CL") != string::npos) {
+                processarConsulta(linha); // Processa consultas
+            } else if (linha.find("EV") != string::npos) {
+                processarEvento(Evento::lerEvento(linha)); // Processa eventos
+            }
+        } catch (const std::exception& e) {
+            cerr << "Aviso: Erro ao processar a linha " << numeroLinha << ": " << e.what() << endl;
+            // Continua o processamento das próximas linhas
         }
     }
-
-    arquivo.close();
 }
-
-
-Simulador::Simulador() {}
-
-Simulador::~Simulador()
-{
-    auto limparEventos = [](Evento *e)
-    { delete e; };
-    eventos.emOrdem(limparEventos);
-}
-
-
-
 
 // Busca um pacote pelo ID. Retorna nullptr se não encontrado.
 Pacote* Simulador::getPacote(int idPacote) const {
@@ -70,38 +73,30 @@ Cliente* Simulador::createCliente(const std::string& nome) {
     return cliente;
 }
 
-
-
-// Processa um evento e atualiza as estruturas de dados
-
 void Simulador::processarEvento(const Evento &evento)
 {
-    
     Pacote* pct = getPacote(evento.idPacote);
     if (!pct) {
-        pct = createPacote(evento.idPacote);
+        pct = createPacote(evento.idPacote); // Cria pacote se não existir
     }
 
-    // Armazena o evento na árvore de eventos
     Evento *novoEvento = new Evento(evento);
     eventos.inserir(novoEvento);
 
-    // Atualiza primeiro e último evento do pacote
     if (pct->getPrimeiroEvento() == nullptr)
         pct->setPrimeiroEvento(novoEvento);
     pct->setUltimoEvento(novoEvento);
 
-    // Se for registro geral, vincula remetente e destinatário
     if (evento.tipo == RG)
     {
-        // Lógica atualizada para o remetente
+        // Atualiza remetente
         Cliente *remetente = getCliente(evento.remetente);
         if (!remetente) {
             remetente = createCliente(evento.remetente);
         }
         remetente->adicionarPacoteRemetente(evento.idPacote);
 
-        // Lógica atualizada para o destinatário
+        // Atualiza destinatário
         Cliente *destinatario = getCliente(evento.destinatario);
         if(!destinatario) {
             destinatario = createCliente(evento.destinatario);
@@ -110,13 +105,11 @@ void Simulador::processarEvento(const Evento &evento)
     }
 }
 
-// Obtém histórico completo de um pacote
 ListaEventos Simulador::getHistoricoPacote(int idPacote) const
 {
     ListaEventos todosEventos = eventos.getTodosEventos();
     ListaEventos resultado;
 
-    // Filtra eventos pelo ID do pacote
     for (auto it = todosEventos.begin(); it.eValido(); ++it)
         if ((*it).idPacote == idPacote)
             resultado.push_back(*it);
@@ -124,10 +117,10 @@ ListaEventos Simulador::getHistoricoPacote(int idPacote) const
     return resultado;
 }
 
-// Função auxiliar para imprimir um evento formatado
+// Imprime um evento formatado
 void imprimirEvento(Evento *e)
 {
-    // Formatação padrão do timestamp e tipo
+    if (!e) return;
     cout << setfill('0') << setw(7) << e->tempo << " EV ";
     switch (e->tipo)
     {
@@ -140,7 +133,6 @@ void imprimirEvento(Evento *e)
     }
     cout << setfill('0') << setw(3) << e->idPacote;
 
-    // Campos específicos por tipo de evento
     if (e->tipo == RG)
         cout << " " << e->remetente << " " << e->destinatario
              << " " << setfill('0') << setw(3) << e->armazemOrigem
@@ -157,40 +149,38 @@ void imprimirEvento(Evento *e)
     cout << endl;
 }
 
-// Processa consultas do tipo PC (Pacote) ou CL (Cliente)
 void Simulador::processarConsulta(const string &linha)
 {
     istringstream iss(linha);
     int timestamp;
     string tipo;
 
-    iss >> timestamp >> tipo;
+    if (!(iss >> timestamp >> tipo)) {
+        throw std::runtime_error("Formato de consulta invalido: " + linha);
+    }
 
-    // Formata timestamp com zeros à esquerda
-    string timestampFormatado = to_string(timestamp);
-    while (timestampFormatado.length() < 6)
-        timestampFormatado = "0" + timestampFormatado;
-    timestampFormatado = timestampFormatado.substr(timestampFormatado.length() - 6);
+    cout << setfill('0') << setw(6) << timestamp << " " << tipo;
 
-    cout << timestampFormatado << " " << tipo;
-
-    if (tipo == "PC") // Consulta de Pacote
+    if (tipo == "PC")
     {
         int idPacote;
-        iss >> idPacote;
+        if (!(iss >> idPacote)) {
+            throw std::runtime_error("ID do pacote ausente na consulta PC: " + linha);
+        }
         cout << " " << setfill('0') << setw(3) << idPacote << endl;
 
         ListaEventos historico = getHistoricoPacote(idPacote);
-        cout << historico.getTamanho() << endl; // Quantidade de eventos
+        cout << historico.getTamanho() << endl;
 
-        // Imprime cada evento do histórico
         for (auto it = historico.begin(); it.eValido(); ++it)
             imprimirEvento(&(*it));
     }
-    else if (tipo == "CL") // Consulta de Cliente
+    else if (tipo == "CL")
     {
         string nomeCliente;
-        iss >> nomeCliente;
+        if (!(iss >> nomeCliente)) {
+             throw std::runtime_error("Nome do cliente ausente na consulta CL: " + linha);
+        }
         cout << " " << nomeCliente << endl;
 
         Cliente *cliente = clientes.buscar(nomeCliente);
@@ -200,43 +190,31 @@ void Simulador::processarConsulta(const string &linha)
             return;
         }
 
-        // Coleta eventos relevantes (primeiro e último de cada pacote)
         ArvoreEventos eventosRelevantes;
-
-        // Pacotes como remetente
+        // Adiciona eventos dos pacotes em que o cliente é remetente
         for (auto it = cliente->getPacotesRemetente().begin(); it.eValido(); ++it)
         {
-            int idPacote = *it;
-            Pacote *pct = pacotes.buscar(idPacote);
-            if (pct)
-            {
-                if (pct->getPrimeiroEvento())
-                    eventosRelevantes.inserir(pct->getPrimeiroEvento());
-                if (pct->getUltimoEvento() && pct->getUltimoEvento() != pct->getPrimeiroEvento())
-                    eventosRelevantes.inserir(pct->getUltimoEvento());
+            Pacote *pct = pacotes.buscar(*it);
+            if (pct) {
+                if (pct->getPrimeiroEvento()) eventosRelevantes.inserir(pct->getPrimeiroEvento());
+                if (pct->getUltimoEvento() && pct->getUltimoEvento() != pct->getPrimeiroEvento()) eventosRelevantes.inserir(pct->getUltimoEvento());
             }
         }
-
-        // Pacotes como destinatário
+        // Adiciona eventos dos pacotes em que o cliente é destinatário
         for (auto it = cliente->getPacotesDestinatario().begin(); it.eValido(); ++it)
         {
-            int idPacote = *it;
-            Pacote *pct = pacotes.buscar(idPacote);
-            if (pct)
-            {
-                if (pct->getPrimeiroEvento())
-                    eventosRelevantes.inserir(pct->getPrimeiroEvento());
-                if (pct->getUltimoEvento() && pct->getUltimoEvento() != pct->getPrimeiroEvento())
-                    eventosRelevantes.inserir(pct->getUltimoEvento());
+            Pacote *pct = pacotes.buscar(*it);
+            if (pct) {
+                if (pct->getPrimeiroEvento()) eventosRelevantes.inserir(pct->getPrimeiroEvento());
+                if (pct->getUltimoEvento() && pct->getUltimoEvento() != pct->getPrimeiroEvento()) eventosRelevantes.inserir(pct->getUltimoEvento());
             }
         }
 
-        cout << eventosRelevantes.tamanho() << endl; // Quantidade de eventos
-        eventosRelevantes.emOrdem(imprimirEvento);   // Imprime em ordem
+        cout << eventosRelevantes.tamanho() << endl;
+        eventosRelevantes.emOrdem(imprimirEvento);
     }
 }
 
-// Obtém todos pacotes associados a um cliente (como remetente ou destinatário)
 ListaPacotes Simulador::getPacotesCliente(const string &nomeCliente) const
 {
     ListaPacotes resultado;
@@ -244,30 +222,22 @@ ListaPacotes Simulador::getPacotesCliente(const string &nomeCliente) const
 
     if (cliente)
     {
-        // Pacotes como remetente
+        // Pacotes em que o cliente é remetente
         for (auto it = cliente->getPacotesRemetente().begin(); it.eValido(); ++it)
         {
             Pacote *pct = pacotes.buscar(*it);
-            if (pct)
-            {
-                ListaEventos eventosPct = getHistoricoPacote(*it);
-                if (!eventosPct.estaVazia())
-                    resultado.push_back(PacoteEString(pct, "remetente"));
+            if (pct) {
+                resultado.push_back(PacoteEString(pct, "remetente"));
             }
         }
-
-        // Pacotes como destinatário
+        // Pacotes em que o cliente é destinatário
         for (auto it = cliente->getPacotesDestinatario().begin(); it.eValido(); ++it)
         {
             Pacote *pct = pacotes.buscar(*it);
-            if (pct)
-            {
-                ListaEventos eventosPct = getHistoricoPacote(*it);
-                if (!eventosPct.estaVazia())
-                    resultado.push_back(PacoteEString(pct, "destinatario"));
+            if (pct) {
+                resultado.push_back(PacoteEString(pct, "destinatario"));
             }
         }
     }
-
     return resultado;
 }

@@ -2,66 +2,82 @@
 #define LISTA_INT_H
 
 #include <iostream>
-#include <cstdlib> 
+#include <stdexcept>
 
-// Classe de lista duplamente encadeada de inteiros.
-// Permite enfileirar elementos, copiar listas e iterar sobre os itens.
-// Possui métodos para verificar tamanho e se está vazia.
-class ListaInt {
+// Lista duplamente encadeada de inteiros
+class ListaInt
+{
 private:
-    struct No {
+    struct No
+    {
         int dados;
-        No* proximo;
-        No* anterior;
+        No *proximo;
+        No *anterior;
 
         No(int d) : dados(d), proximo(nullptr), anterior(nullptr) {}
     };
 
-    No* cabeca;
-    No* cauda;
+    No *cabeca; // ponteiro para o primeiro nó
+    No *cauda;  // ponteiro para o último nó
     int tamanho;
 
-    void limpar() {
-        No* atual = cabeca;
-        while (atual != nullptr) {
-            No* proximoNode = atual->proximo;
+    // Remove todos os nós da lista
+    void limpar()
+    {
+        No *atual = cabeca;
+        while (atual != nullptr)
+        {
+            No *proximoNode = atual->proximo;
             delete atual;
             atual = proximoNode;
         }
         cabeca = cauda = nullptr;
         tamanho = 0;
     }
-    
+
 public:
     ListaInt() : cabeca(nullptr), cauda(nullptr), tamanho(0) {}
 
-    ~ListaInt() {
+    ~ListaInt()
+    {
         limpar();
     }
-    
-    ListaInt(const ListaInt& outra) {
+
+    // Construtor de cópia
+    ListaInt(const ListaInt &outra)
+    {
         cabeca = cauda = nullptr;
         tamanho = 0;
-        for (No* atual = outra.cabeca; atual != nullptr; atual = atual->proximo) {
+        for (No *atual = outra.cabeca; atual != nullptr; atual = atual->proximo)
+        {
             enfileirar(atual->dados);
         }
     }
 
-    ListaInt& operator=(const ListaInt& outra) {
-        if (this != &outra) {
+    // Operador de atribuição
+    ListaInt &operator=(const ListaInt &outra)
+    {
+        if (this != &outra)
+        {
             limpar();
-            for (No* atual = outra.cabeca; atual != nullptr; atual = atual->proximo) {
+            for (No *atual = outra.cabeca; atual != nullptr; atual = atual->proximo)
+            {
                 enfileirar(atual->dados);
             }
         }
         return *this;
     }
 
-    void enfileirar(int dados) {
-        No* novoNo = new No(dados);
-        if (!cabeca) {
+    // Adiciona elemento ao final da lista
+    void enfileirar(int dados)
+    {
+        No *novoNo = new No(dados);
+        if (!cabeca)
+        {
             cabeca = cauda = novoNo;
-        } else {
+        }
+        else
+        {
             cauda->proximo = novoNo;
             novoNo->anterior = cauda;
             cauda = novoNo;
@@ -69,42 +85,53 @@ public:
         tamanho++;
     }
 
-    int getTamanho() const {
+    int getTamanho() const
+    {
         return tamanho;
     }
 
-    bool estaVazia() const {
+    bool estaVazia() const
+    {
         return tamanho == 0;
     }
 
-    class Iterador {
+    // Classe iteradora para percorrer a lista
+    class Iterador
+    {
     public:
-        Iterador(No* no) : atual(no) {}
-        
-        bool eValido() const {
+        Iterador(No *no) : atual(no) {}
+
+        bool eValido() const
+        {
             return atual != nullptr;
         }
 
-        int& operator*() {
-             if (!atual) {
-                std::cerr << "Erro fatal: Tentativa de desreferenciar um iterador invalido." << std::endl;
-                exit(1);
+        int &operator*()
+        {
+            if (!eValido())
+            {
+                throw std::out_of_range("Tentativa de desreferenciar um iterador invalido.");
             }
             return atual->dados;
         }
 
-        Iterador& operator++() {
-            if (atual) {
+        // Avança para o próximo nó
+        Iterador &operator++()
+        {
+            if (eValido())
+            {
                 atual = atual->proximo;
             }
             return *this;
         }
 
     private:
-        No* atual;
+        No *atual;
     };
 
-    Iterador begin() const {
+    // Retorna iterador para o início da lista
+    Iterador begin() const
+    {
         return Iterador(cabeca);
     }
 };

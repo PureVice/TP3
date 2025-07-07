@@ -4,8 +4,8 @@
 // Construtor do nó: inicializa com dados do pacote e ponteiros nulos
 NoPacote::NoPacote(Pacote* d) : pacote(d), esquerda(nullptr), direita(nullptr), altura(1) {}
 
-// Construtor da árvore: inicializa raiz nula e contador zerado
-ArvorePacotes::ArvorePacotes() : raiz(nullptr), contador(0) {}
+// Construtor da árvore: inicializa raiz nula e totalPacotes zerado
+ArvorePacotes::ArvorePacotes() : raiz(nullptr), totalPacotes(0) {}
 
 // Destrutor: limpa toda a árvore recursivamente
 ArvorePacotes::~ArvorePacotes() {
@@ -97,7 +97,7 @@ NoPacote* ArvorePacotes::balancear(NoPacote* no) {
 // Interface pública para inserção
 void ArvorePacotes::inserir(Pacote* dados) {
     raiz = inserir(raiz, dados);
-    contador++;
+    totalPacotes++;
 }
 
 // Inserção recursiva com balanceamento
@@ -159,7 +159,7 @@ NoPacote* ArvorePacotes::remover(NoPacote* no, int chave) {
                 *no = *temp;  // Copia filho para o nó atual
             }
             delete temp;
-            contador--;
+            totalPacotes--;
         } else {  // Nó com 2 filhos
             NoPacote* temp = noMinimo(no->direita);  // Encontra sucessor
             no->pacote = temp->pacote;  // Copia dados do sucessor
@@ -195,5 +195,5 @@ void ArvorePacotes::emOrdem(NoPacote* no, void (*visitar)(Pacote*)) const {
 
 // Retorna quantidade de pacotes na árvore
 int ArvorePacotes::tamanho() const {
-    return contador;
+    return totalPacotes;
 }

@@ -10,16 +10,15 @@ struct NoEvento {
     NoEvento* esquerda;
     NoEvento* direita;
     int altura;
-    
+
     NoEvento(Evento* dados);
 };
 
-// Classe para gerenciar uma árvore AVL de eventos.
-// Permite inserir, remover, buscar e percorrer eventos ordenados por chave.
 class ArvoreEventos {
 private:
     NoEvento* raiz;
     int contador;
+
     void limpar(NoEvento* no);
     int altura(NoEvento* no) const;
     int getBalanceamento(NoEvento* no) const;
@@ -36,9 +35,13 @@ private:
     void coletarEmOrdem(NoEvento* no, ListaEventos& lista) const;
 
 public:
-
     ArvoreEventos();
     ~ArvoreEventos();
+
+
+    ArvoreEventos(const ArvoreEventos&) = delete;
+    ArvoreEventos& operator=(const ArvoreEventos&) = delete;
+
     void inserir(Evento* dados);
     void remover(int chave);
     Evento* buscar(int chave) const;

@@ -12,18 +12,15 @@ struct NoPacote {
     NoPacote(Pacote* pacote);
 };
 
-// Classe para gerenciar uma árvore AVL de pacotes.
-// Permite inserir, remover, buscar e percorrer pacotes de forma balanceada.
 class ArvorePacotes {
 private:
     NoPacote* raiz;
-    int totalPacotes;
+    int totalPacotes; 
 
     void limpar(NoPacote* no);
     int altura(NoPacote* no) const;
     int fatorBalanceamento(NoPacote* no) const;
     void atualizarAltura(NoPacote* no);
-    int contador;
     NoPacote* rotacaoDireita(NoPacote* y);
     NoPacote* rotacaoEsquerda(NoPacote* x);
     NoPacote* balancear(NoPacote* no);
@@ -37,6 +34,9 @@ public:
     ArvorePacotes();
     ~ArvorePacotes();
 
+    ArvorePacotes(const ArvorePacotes&) = delete;
+    ArvorePacotes& operator=(const ArvorePacotes&) = delete;
+
     void inserir(Pacote* pacote);
     void remover(int chave);
     Pacote* buscar(int chave) const;
@@ -44,4 +44,4 @@ public:
     int tamanho() const;
 };
 
-#endif // ARVORE_PACOTES_H
+#endif 
