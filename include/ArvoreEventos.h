@@ -33,6 +33,7 @@ private:
     void emOrdem(NoEvento* no, void (*visitar)(Evento*)) const;
     int getChave(Evento* evento) const;
     void coletarEmOrdem(NoEvento* no, ListaEventos& lista) const;
+    void coletarNoIntervalo(NoEvento* no, int tempoInicio, int tempoFim, ListaEventos& lista) const;
 
 public:
     ArvoreEventos();
@@ -48,6 +49,7 @@ public:
     void emOrdem(void (*visitar)(Evento*)) const;
     int tamanho() const;
     ListaEventos getTodosEventos() const;
+    ListaEventos getEventosNoIntervalo(int tempoInicio, int tempoFim) const;
 };
 
 #endif

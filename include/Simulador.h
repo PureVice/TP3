@@ -4,6 +4,7 @@
 #include "ArvorePacotes.h"
 #include "ArvoreClientes.h"
 #include "ArvoreEventos.h"
+#include "ArvoreRotas.h" // extra
 #include "Evento.h"
 #include "Pacote.h"
 #include "Cliente.h"
@@ -20,11 +21,17 @@ private:
     ArvorePacotes pacotes;
     ArvoreClientes clientes;
     ArvoreEventos eventos;
+    ArvoreRotas rotasCongestionadas; // Adicionado para gerenciar o congestionamento
 
     Pacote* getPacote(int idPacote) const;
     Pacote* createPacote(int idPacote);
     Cliente* getCliente(const std::string& nome) const;
     Cliente* createCliente(const std::string& nome);
+
+    // Métodos para as novas consultas
+    void processarConsultaMovimentacaoArmazem(istringstream& iss, int timestamp);
+    void processarConsultaRotasCongestionadas(int timestamp);
+
 
 public:
     Simulador();

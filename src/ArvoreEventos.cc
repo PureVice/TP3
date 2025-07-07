@@ -220,6 +220,36 @@ void ArvoreEventos::coletarEmOrdem(NoEvento* no, ListaEventos& lista) const {
     }
 }
 
+void ArvoreEventos::coletarNoIntervalo(NoEvento* no, int tempoInicio, int tempoFim, ListaEventos& lista) const {
+    if (!no) {
+        return;
+    }
+
+    int tempoAtual = no->dados->tempo;
+
+    // A chave da árvore de eventos é baseada no tempo, então podemos podar a busca
+    if (tempoInicio < tempoAtual) {
+        coletarNoIntervalo(no->esquerda, tempoInicio, tempoFim, lista);
+    }
+
+    if (tempoAtual >= tempoInicio && tempoAtual <= tempoFim) {
+        lista.push_back(*(no->dados));
+    }
+    
+    if (tempoFim > tempoAtual) {
+        coletarNoIntervalo(no->direita, tempoInicio, tempoFim, lista);
+    }
+}
+
+// Nova implementação
+ListaEventos ArvoreEventos::getEventosNoIntervalo(int tempoInicio, int tempoFim) const {
+    ListaEventos lista;
+    coletarNoIntervalo(raiz, tempoInicio, tempoFim, lista);
+    return lista;
+}
+
+
+
 // Retorna quantidade de eventos
 int ArvoreEventos::tamanho() const {
     return contador;

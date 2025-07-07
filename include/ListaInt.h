@@ -94,7 +94,16 @@ public:
     {
         return tamanho == 0;
     }
-
+    void imprimir() const
+    {
+        No *atual = cabeca;
+        while (atual != nullptr)
+        {
+            std::cout << atual->dados << " ";
+            atual = atual->proximo;
+        }
+        std::cout << std::endl;
+    }
     // Classe iteradora para percorrer a lista
     class Iterador
     {

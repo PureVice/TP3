@@ -40,7 +40,7 @@ void Simulador::carregarEventos(const std::string& nomeArquivo) {
         string comando;
         iss >> timestamp >> comando;
         try {
-            if (comando == "PC" || comando == "CL") {
+            if (comando == "PC" || comando == "CL" || comando == "MA" || comando == "RC") {
                 processarConsulta(linha); // Processa consultas
             } else if (comando == "EV") {
                 processarEvento(Evento::lerEvento(linha)); // Processa eventos
@@ -64,6 +64,7 @@ Pacote* Simulador::createPacote(int idPacote) {
     return pct;
 }
 
+// FUNÇÃO QUE ESTAVA FALTANDO
 // Busca um cliente pelo nome. Retorna nullptr se não encontrado.
 Cliente* Simulador::getCliente(const std::string& nome) const {
     return clientes.buscar(nome);
@@ -106,6 +107,11 @@ void Simulador::processarEvento(const Evento &evento)
         }
         destinatario->adicionarPacoteDestinatario(evento.idPacote);
     }
+    // Adicionado: Atualiza contagem de rotas para eventos de transporte
+    else if (evento.tipo == TR)
+    {
+        rotasCongestionadas.incrementar(evento.armazemOrigem, evento.armazemDestino);
+    }
 }
 
 ListaEventos Simulador::getHistoricoPacote(int idPacote) const
@@ -142,7 +148,7 @@ void imprimirEvento(Evento *e)
              << " " << setfill('0') << setw(3) << e->armazemDestino;
     else if (e->tipo == AR)
         cout << " " << setfill('0') << setw(3) << e->armazemOrigem
-             << " " << setfill('0') << setw(3) << e->armazemDestino;
+             << " " << setfill('0') << setw(3) << e->secaoDestino; // Corrigido para seção destino
     else if (e->tipo == RM || e->tipo == UR || e->tipo == TR)
         cout << " " << setfill('0') << setw(3) << e->armazemOrigem
              << " " << setfill('0') << setw(3) << e->armazemDestino;
@@ -151,6 +157,48 @@ void imprimirEvento(Evento *e)
     
     cout << endl;
 }
+
+// Novo método para consulta MA
+void Simulador::processarConsultaMovimentacaoArmazem(istringstream& iss, int timestamp) {
+    int tempoInicio, tempoFim, idArmazem;
+    if (!(iss >> tempoInicio >> tempoFim >> idArmazem)) {
+        throw std::runtime_error("Formato de consulta MA invalido.");
+    }
+
+    cout << " " << setfill('0') << setw(7) << tempoInicio 
+         << " " << setfill('0') << setw(7) << tempoFim
+         << " " << setfill('0') << setw(3) << idArmazem << endl;
+
+    ListaEventos eventosIntervalo = eventos.getEventosNoIntervalo(tempoInicio, tempoFim);
+    ListaEventos eventosFiltrados;
+
+    for(auto it = eventosIntervalo.begin(); it.eValido(); ++it) {
+        Evento& ev = *it;
+        if (ev.armazemOrigem == idArmazem || ev.armazemDestino == idArmazem) {
+             eventosFiltrados.push_back(ev);
+        }
+    }
+
+    cout << eventosFiltrados.getTamanho() << endl;
+    for(auto it = eventosFiltrados.begin(); it.eValido(); ++it) {
+        imprimirEvento(&(*it));
+    }
+}
+
+// Novo método para consulta RC
+void Simulador::processarConsultaRotasCongestionadas(int timestamp) {
+    cout << endl; // Fim da linha da consulta
+    ListaRotas rotas = rotasCongestionadas.getRotasOrdenadas();
+    
+    cout << rotas.getTamanho() << endl;
+    for (auto it = rotas.begin(); it.eValido(); ++it) {
+        Rota& rota = *it;
+        cout << setfill('0') << setw(3) << rota.origem 
+             << " " << setfill('0') << setw(3) << rota.destino 
+             << " " << rota.contagem << endl;
+    }
+}
+
 
 void Simulador::processarConsulta(const string &linha)
 {
@@ -162,7 +210,7 @@ void Simulador::processarConsulta(const string &linha)
         throw std::runtime_error("Formato de consulta invalido: " + linha);
     }
 
-    cout << setfill('0') << setw(6) << timestamp << " " << tipo;
+    cout << setfill('0') << setw(7) << timestamp << " " << tipo;
 
     if (tipo == "PC")
     {
@@ -215,6 +263,15 @@ void Simulador::processarConsulta(const string &linha)
 
         cout << eventosRelevantes.tamanho() << endl;
         eventosRelevantes.emOrdem(imprimirEvento);
+    }
+    // Adicionado: Lidar com novas consultas
+    else if (tipo == "MA")
+    {
+        processarConsultaMovimentacaoArmazem(iss, timestamp);
+    }
+    else if (tipo == "RC")
+    {
+        processarConsultaRotasCongestionadas(timestamp);
     }
 }
 

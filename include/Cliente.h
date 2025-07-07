@@ -16,6 +16,7 @@ public:
     Cliente(const std::string& nome);
     const std::string& getNome() const;
     void adicionarPacoteRemetente(int idPacote);
+    void imprimeCliente() const;
     void adicionarPacoteDestinatario(int idPacote);
     const ListaInt& getPacotesDestinatario() const; 
     const ListaInt& getPacotesRemetente() const; 
