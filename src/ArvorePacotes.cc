@@ -1,5 +1,9 @@
 #include "ArvorePacotes.h"
-#include <algorithm>
+
+int max(int a, int b) {
+    return (a > b) ? a : b;  // Retorna o maior entre dois inteiros
+}
+
 
 // Construtor do nó: inicializa com dados do pacote e ponteiros nulos
 NoPacote::NoPacote(Pacote* d) : pacote(d), esquerda(nullptr), direita(nullptr), altura(1) {}
